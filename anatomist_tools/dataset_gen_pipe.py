@@ -66,13 +66,10 @@ from load_data import fetch_data
 # Global variables (that the user can change)
 ######################################################################
 
+#type_input= 'skeleton'
+type_input= 'gw'
+
 side = 'L' # hemisphere 'L' or 'R'
-
-# Bounding box defined thanks to
-# bbox_definition.py for S.T.s ter. asc.
-# ant. and post. 
-bbox = ([105, 109, 23], [147, 171, 93])                        
-
 
 # Input directories
 # --------------
@@ -80,29 +77,15 @@ bbox = ([105, 109, 23], [147, 171, 93])
 # Directory that contains the transformation file
 # from native to MNI through SPM
 # These files have been created with spm_skeleton
-# example: dir_input_transform = '/neurospin/dico/lguillon/skeleton/transfo_pre_process' 
-dir_input_transform = '/neurospin/dico/deep_folding/data/transfo_pre_process'
+# example: dir_input_transform = '/neurospin/dico/lguillon/skeleton/transfo_pre_process'
+dir_input_transform = '/home/ad265693/tmp/dico/deep_folding/data/transfo_pre_process'
 
 # Input directory contaning the morphologist analysis of the HCP database
-dir_input_MRI = '/neurospin/hcp/ANALYSIS/3T_morphologist'
+dir_input_MRI = '/home/ad265693/tmp/hcp/ANALYSIS/3T_morphologist/'
 
 # Output directory
 # --------------
-dir_output_base = '/neurospin/dico/deep_folding/data'
-
-
-######################################################################
-# Global variables (that the user will probably not change)
-######################################################################
-
-# Take the coordinates of the bounding box
-xmin, ymin, zmin = str(bbox[0][0]), str(bbox[0][1]), str(bbox[0][2])
-xmax, ymax, zmax = str(bbox[1][0]), str(bbox[1][1]), str(bbox[1][2])
-
-# Define the subdirectory in which the cropped skeletons will be saved
-subdir = side + 'crops'
-dir_output = join(dir_output_base, side + 'crops')
-
+dir_output = '/home/ad265693/tmp/dico/adneves/output/L_GW'
 
 ######################################################################
 # Main function
@@ -111,48 +94,52 @@ dir_output = join(dir_output_base, side + 'crops')
 
 def main():
   """Main loop to create pickle files
-  
+
   The programm loops over all the subjects from the input directory.
   """
 
-  for sub in os.listdir(dir_input_MRI)[:2]: # go through all HCP subjects folder
+  for sub in os.listdir(dir_input_MRI): # go through all HCP subjects folder
 
       # Creating transformation file name
-      file_transform_basename = 'natif_to_template_spm_' + sub + '.trm' 
-      file_transform = join(dir_input_transform, file_transform_basename) 
-      
+      file_transform_basename = 'natif_to_template_spm_' + sub + '.trm'
+      file_transform = join(dir_input_transform, file_transform_basename)
+
       # Creating normalized SPM file name
       file_SPM_basename = 'normalized_SPM_' + sub +'.nii'
       file_SPM = join(dir_input_MRI, sub, 't1mri/default_acquisition', file_SPM_basename)
-      
-      # Creating skeleton file name
-      file_skeleton_basename = side + 'skeleton_' + sub + '.nii.gz'
-      file_skeleton = join(dir_input_MRI, sub, 't1mri/default_acquisition/default_analysis/segmentation', file_skeleton_basename)
-      
+
+
+      if (type_input == 'skeleton'):
+          # Creating skeleton file name
+          file_skeleton_basename = side + 'skeleton_' + sub + '.nii.gz'
+          file_input = join(dir_input_MRI, sub, 't1mri/default_acquisition/default_analysis/segmentation', file_skeleton_basename)
+
+      else:
+          # Creating grey_white file __name__
+          file_gw_basename = side + 'grey_white_' + sub + '.nii.gz'
+          file_input = join(dir_input_MRI, sub, 't1mri/default_acquisition/default_analysis/segmentation', file_gw_basename)
+
+
       # Creating output file name
       file_output_basename = sub + '_normalized.nii.gz'
       file_output = join(dir_output, file_output_basename)
 
       # Normalization and resampling of skeleton images
-      cmd_normalize = 'AimsResample' + ' -i ' + file_skeleton + ' -o ' + file_output + ' -m ' + file_transform + ' -r ' + file_SPM
+      cmd_normalize = 'AimsResample' + ' -i ' + file_input + ' -o ' + file_output + ' -m ' + file_transform + ' -r ' + file_SPM
       os.system(cmd_normalize)
 
-      # Crop of the images based on bounding box
-      cmd_bounding_box = ' -x ' + xmin + ' -y ' + ymin + ' -z ' + zmin + ' -X '+ xmax + ' -Y ' + ymax + ' -Z ' + zmax
-      cmd_crop = 'AimsSubVolume' + ' -i ' + file_output + ' -o ' + file_output + cmd_bounding_box
-      os.system(cmd_crop)
 
   # Creation of global .pickle file
-  fetch_data(dir_output, save_dir=dir_output_base, side=side)
+  fetch_data(dir_output, save_dir=dir_output, side=side)
 
   # Log information
-  input_dict = {'Bbox': bbox, 'side': side}
+  input_dict = {'side': side}
   log_file_name = join(dir_output, 'logs.json')
   log_file = open(log_file_name, 'a+')
   log_file.write(json.dumps(input_dict))
   log_file.close()
-  
-  
+
+
 ######################################################################
 # Main program
 ######################################################################
