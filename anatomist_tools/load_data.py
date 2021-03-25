@@ -13,7 +13,7 @@ import numpy as np
 import re
 
 
-def fetch_data(root_dir, save_dir=None, side=None):
+def fetch_data(root_dir, type_input, save_dir=None, side=None):
     """
     Creates a dataframe of data with a column for each subject and associated
     np.array. Generation a dataframe of "normal" images and a dataframe of
@@ -30,39 +30,19 @@ def fetch_data(root_dir, save_dir=None, side=None):
         data_dict = dict()
         for filename in os.listdir(root_dir+phase):
             file = os.path.join(root_dir+phase, filename)
-            #print(filename)
             if os.path.isfile(file) and '.nii' in file and '.minf' not in file and 'normalized' in file:
-		aimsvol = aims.read(file)
+                aimsvol = aims.read(file)
                 sample = np.asarray(aimsvol).T
-                if input == 'skeleton':
-                    filename = re.search('_(\d{6})', file).group(1)
-                else:
-                    # filename = re.search('-(\d{6})', file).group(1)
-                    #filename = re.search('_(\d{6})', file).group(1)
-                    #filename = re.search('(\d{12})', file).group(1)
-                    filename = re.search('(\d{6})', file).group(1)
+                filename = re.search('(\d{6})', filename).group(0)
+                print('filename = ' + filename)
+                print('file = ' + file)
 
                 data_dict[filename] = [sample]
                 #print(filename)
 
-        dataframe = pd.DataFrame.from_dict(data_dict)
+            dataframe = pd.DataFrame.from_dict(data_dict)
 
-        if save_dir:
-            file_pickle_basename = side + 'skeleton.pkl'
-            file_pickle = os.path.join(save_dir, file_pickle_basename)
-            dataframe.to_pickle(file_pickle)
-        else:
-            dataframe.to_pickle('/neurospin/dico/lguillon/mic21/anomalies_set/dataset/benchmark2/abnormal_skeleton_left.pkl')
-
-
-if __name__ == '__main__':
-    input = 'skeleton'
-    # input = 'raw'
-
-    if input == 'raw':
-        # Raw MRIs - crop
-        fetch_data('/neurospin/dico/lguillon/aims_detection/aims_crop/skeleton/right_hemi/normalized_crops/')
-
-    else:
-        # Skeletons
-        fetch_data('/neurospin/dico/lguillon/mic21/anomalies_set/dataset/benchmark2/0_Lside/')
+            if save_dir:
+                file_pickle_basename = side + type_input + '.pkl'
+                file_pickle = os.path.join(save_dir, file_pickle_basename)
+                dataframe.to_pickle(file_pickle)

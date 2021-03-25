@@ -130,7 +130,7 @@ def main():
 
 
   # Creation of global .pickle file
-  fetch_data(dir_output, save_dir=dir_output, side=side)
+  fetch_data(dir_output, type_input, save_dir=dir_output, side=side)
 
   # Log information
   input_dict = {'side': side}

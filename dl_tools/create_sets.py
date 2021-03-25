@@ -11,13 +11,14 @@ import argparse
 import pandas as pd
 import itertools
 
+from os.path import join
 import torch
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torchio as tio
 
-from dl_tools.pynet_transforms import *
-from dl_tools import save_results
+from pynet_transforms import *
+import save_results
 
 
 class TensorDataset():
@@ -28,14 +29,12 @@ class TensorDataset():
         skeleton: boolean, whether input is skeleton images or not
     OUT: tensor of [batch, sample, subject ID]
     """
-    def __init__(self, data_tensor, filenames, skeleton):
-        self.skeleton = skeleton
+    def __init__(self, data_tensor, filenames):
         self.data_tensor = data_tensor
         self.transform = True
         self.nb_train = len(filenames)
         print(self.nb_train)
         self.filenames = filenames
-        self.vae = vae
 
     def __len__(self):
         return(self.nb_train)
@@ -46,24 +45,10 @@ class TensorDataset():
         sample = self.data_tensor[idx]
         file = self.filenames[idx]
 
-        if self.skeleton:
-            fill_value = 1
-            sample = NormalizeSkeleton(sample)()
-            self.transform = transforms.Compose([DownsampleTensor(scale=2),
-                        PaddingTensor([1, 40, 40, 40], fill_value=fill_value)
-            ])
-
-            sample = self.transform(sample)
-
-        else:
-            self.transform = PaddingTensor([1, 80, 80, 80])
-            sample = self.transform(sample)
-            self.transform = DownsampleTensor(scale=2)
-            sample = self.transform(sample)
-            if self.vae:
-                self.transform = DownsampleTensor(scale=2)
-                sample = self.transform(sample)
-            sample = NormalizeHisto(sample)()
+        self.transform = PaddingTensor([1, 80, 80, 80])
+        sample = self.transform(sample)
+        self.transform = DownsampleTensor(scale=2)
+        sample = self.transform(sample)
 
         tuple_with_path = (sample, file)
         return tuple_with_path
@@ -209,7 +194,7 @@ def create_benchmark_test(benchmark, side, handedness=1):
     return benchmark_loader
 
 
-def create_hcp_sets(skeleton, side, directory, batch_size, handedness=0):
+def create_hcp_sets(input_type, side, directory, batch_size):
     """
     Creates datasets from HCP data
     IN: skeleton: boolean, True if input is skeleton, False otherwise,
@@ -222,63 +207,14 @@ def create_hcp_sets(skeleton, side, directory, batch_size, handedness=0):
          dataset_train_loader, dataset_val_loader, dataset_test_loader: loaders
          that will be used for training and testing
     """
-    print(torch.cuda.current_device())
-    date_exp = date.today().strftime("%d%m%y")
-    if skeleton == True:
-        skel = 'skeleton'
-        loss_type = 'CrossEnt'
-        root_dir = directory + side + '_hemi_' + skel + '_' + date_exp + '_' +loss_type + '_' + str(handedness) + '_2classes/'
-    else:
-        skel = 'norm_spm'
-        loss_type = 'L2'
-        root_dir = directory + side + '_hemi_' + skel + '_' + date_exp + '_' +loss_type + '_' + str(handedness) +'/'
 
-    #print("Parameters : skeleton: {}, side: {}, weights: {}, loss_type: {}".format(skeleton, side, weights, loss_type))
-    print(root_dir)
-    save_results.create_folder(root_dir)
+    tmp = pd.read_pickle(join(directory , side + input_type +'.pkl'))
+    filenames = list(tmp.columns)
+    tmp = torch.from_numpy(np.array([tmp.loc[k].values[0] for k in range(len(tmp))]))
 
-    if skeleton:
-        data_dir = '/neurospin/dico/lguillon/skeleton/sts_crop/'
-        #data_dir = '/home_local/lg261972/data/'
-        if handedness == 0:
-            input_data = 'sts_crop_skeleton_' + side
-            tmp = pd.read_pickle(data_dir + input_data +'.pkl')
-            filenames = list(tmp.columns)
-            tmp = torch.from_numpy(np.array([tmp.loc[0].values[k] for k in range(len(tmp))]))
-        else:
-            if handedness == 1:
-                input_data = side + '_hemi_rightH_sts_crop_skeleton'
-            else:
-                input_data = side + '_hemi_leftH_sts_crop_skeleton'
-            print(input_data)
-            tmp = pd.read_pickle(data_dir + input_data +'.pkl')
-            filenames = tmp.Subject.values
-            print(len(filenames))
-            tmp = torch.from_numpy(np.array([tmp.loc[k].values[0] for k in range(len(tmp))]))
+    #tmp = tmp.to('cuda')
 
-    else:
-        data_dir = '/neurospin/dico/lguillon/hcp_cs_crop/sts_crop/'+ side + '_hemi/'
-        data_dir = '/home_local/lg261972/data/'
-        if handedness == 0:
-            input_data = 'sts_crop_' + side
-            tmp = pd.read_pickle(data_dir + input_data +'.pkl')
-            filenames = list(tmp.columns)
-            tmp = torch.from_numpy(np.array([tmp.loc[0].values[k] for k in range(len(tmp))]))
-        else:
-            if handedness == 1:
-                input_data = side + '_hemi_rightH_sts_crop'
-            else:
-                input_data = side + '_hemi_leftH_sts_crop'
-            print(input_data)
-            tmp = pd.read_pickle(data_dir + input_data +'.pkl')
-            filenames = tmp.Subject.values
-            print(len(filenames))
-            tmp = torch.from_numpy(np.array([tmp.loc[k].values[0] for k in range(len(tmp))]))
-
-    tmp = tmp.to('cuda')
-
-    hcp_dataset = TensorDataset(filenames=filenames, data_tensor=tmp,
-                                skeleton=skeleton, vae=False)
+    hcp_dataset = TensorDataset(filenames=filenames, data_tensor=tmp)
     # Split training set into train, val and test
     partition = [0.7, 0.2, 0.1]
     print([round(i*(len(hcp_dataset))) for i in partition])
@@ -414,3 +350,12 @@ def create_aims_sets(skeleton, side, handedness=0):
                                               num_workers=0, batch_size=1)
 
     return asd_dataset, controls_dataset, id_controls_dataset, asd_id_dataset
+
+def main() :
+    directory ='/home/ad265693/tmp/dico/adneves/output/L_GW'
+    input_type = 'gw'
+    _,train,_,_=create_hcp_sets(input_type='gw', side='L', directory=directory, batch_size=1)
+    print(train[0])
+
+if __name__ == '__main__':
+    main()
