@@ -10,6 +10,7 @@ from datetime import date
 import argparse
 import pandas as pd
 import itertools
+import matplotlib.pyplot as plt
 
 from os.path import join
 import torch
@@ -43,11 +44,6 @@ class TensorDataset():
             idx = idx.tolist()
         sample = self.data_tensor[idx]
         file = self.filenames[idx]
-
-        self.transform = PaddingTensor([1, 80, 80, 80])
-        sample = self.transform(sample)
-        self.transform = DownsampleTensor(scale=2)
-        sample = self.transform(sample)
 
         tuple_with_path = (sample, file)
         return tuple_with_path
@@ -211,7 +207,8 @@ def create_hcp_sets(input_type, side, directory, batch_size):
     #save_results.create_folder(root_dir)
     tmp = pd.read_pickle(join(directory , side + input_type +'.pkl'))
     filenames = list(tmp.columns)
-    tmp = torch.from_numpy(np.array([tmp.loc[k].values[0] for k in range(len(tmp))]))
+    #print(tmp.loc[0,filenames[4]])
+    tmp = torch.from_numpy(np.array([tmp.loc[0,file_name] for file_name in filenames]))
     print(tmp.shape)
     #tmp = tmp.to('cuda')
 
@@ -357,8 +354,9 @@ def main() :
     side = 'L'
     directory ='/home/ad265693/tmp/dico/adneves/output/' + side + '_' + input_type
     root_dir, train_loader, val_loader, test_loader= create_hcp_sets(input_type=input_type, side=side, directory=directory, batch_size=1)
-    for i, batch in enumerate(train_loader):
-        print(i, batch)
+    dataiter = iter(train_loader)
+    images= dataiter.next()
+    plt.imshow(images[0].numpy()[:,:,0].squeeze(), cmap='Greys_r')
 
 if __name__ == '__main__':
     main()
