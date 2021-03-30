@@ -33,7 +33,6 @@ class TensorDataset():
         self.data_tensor = data_tensor
         self.transform = True
         self.nb_train = len(filenames)
-        print(self.nb_train)
         self.filenames = filenames
 
     def __len__(self):
@@ -207,11 +206,13 @@ def create_hcp_sets(input_type, side, directory, batch_size):
          dataset_train_loader, dataset_val_loader, dataset_test_loader: loaders
          that will be used for training and testing
     """
-
+    date_exp = date.today().strftime("%d%m%y")
+    root_dir= join(directory, date_exp)
+    #save_results.create_folder(root_dir)
     tmp = pd.read_pickle(join(directory , side + input_type +'.pkl'))
     filenames = list(tmp.columns)
     tmp = torch.from_numpy(np.array([tmp.loc[k].values[0] for k in range(len(tmp))]))
-
+    print(tmp.shape)
     #tmp = tmp.to('cuda')
 
     hcp_dataset = TensorDataset(filenames=filenames, data_tensor=tmp)
@@ -352,10 +353,12 @@ def create_aims_sets(skeleton, side, handedness=0):
     return asd_dataset, controls_dataset, id_controls_dataset, asd_id_dataset
 
 def main() :
-    directory ='/home/ad265693/tmp/dico/adneves/output/L_GW'
     input_type = 'gw'
-    _,train,_,_=create_hcp_sets(input_type='gw', side='L', directory=directory, batch_size=1)
-    print(train[0])
+    side = 'L'
+    directory ='/home/ad265693/tmp/dico/adneves/output/' + side + '_' + input_type
+    root_dir, train_loader, val_loader, test_loader= create_hcp_sets(input_type=input_type, side=side, directory=directory, batch_size=1)
+    for i, batch in enumerate(train_loader):
+        print(i, batch)
 
 if __name__ == '__main__':
     main()
