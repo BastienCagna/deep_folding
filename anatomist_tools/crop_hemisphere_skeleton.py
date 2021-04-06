@@ -7,22 +7,18 @@ import numpy as np
 #root_dir='/home/ad265693/tmp/hcp/ANALYSIS/3T_morphologist'
 #side = 'L'
 
-def get_subject_list(root_dir):
-    subject_list=[]
-    for subject in os.listdir(root_dir):
-        subject_list.append(subject)
-    return subject_list
-
 def crop_tal(side, root_dir):
-    subject_list = get_subject_list(root_dir)
+    subject_list = [ name for name in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, name)) ]
+    print(subject_list)
     n_sub=0
     N_sub=len(subject_list)
     tal_to_native, voxel_size = compute_transform_tal_to_native()
-    bbmin=[154.72618214040995, 88.5711843650788, 118.70861482061446]
-    bbmax=[304.3427610481158, 382.61495191883296, 313.1459983550012]
+    bbmin=[86, 15, 25]
+    bbmax=[162, 195, 160]
     for subject in subject_list:
         dir_sub= side + subject + '.arg'
-        arg_dir = join(root_dir,subject,'t1mri','default_acquisition','default_analysis','folds','3.1', side + subject + '.arg')
+        arg_dir = join(root_dir,subject,'t1mri','t1','default_analysis','folds','3.3', 'base2018_manual', side + subject + '_'+'base2018_manual' + '.arg')
+        #arg_dir = join(root_dir,subject,'t1mri','default_acquisition','default_analysis','folds','3.1', side + subject + '.arg')
         graph = aims.read(arg_dir)
         bb_min, bb_max  = graph['boundingbox_min'], graph['boundingbox_max']
         bbmin_mni = np.asarray(tal_to_native.transform(bb_min))

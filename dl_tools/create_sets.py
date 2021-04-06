@@ -349,14 +349,10 @@ def create_aims_sets(skeleton, side, handedness=0):
 
     return asd_dataset, controls_dataset, id_controls_dataset, asd_id_dataset
 
-def main() :
-    input_type = 'gw'
-    side = 'L'
-    directory ='/home/ad265693/tmp/dico/adneves/output/' + side + '_' + input_type
-    root_dir, train_loader, val_loader, test_loader= create_hcp_sets(input_type=input_type, side=side, directory=directory, batch_size=1)
-    dataiter = iter(train_loader)
-    images= dataiter.next()
-    plt.imshow(images[0].numpy()[:,:,0].squeeze(), cmap='Greys_r')
+def main_create(input_type,side, batch_size) :
+    directory ='/neurospin/dico/adneves/output/' + side + '_' + input_type
+    return create_hcp_sets(input_type=input_type, side=side, directory=directory, batch_size=batch_size)
+
 
 if __name__ == '__main__':
     main()

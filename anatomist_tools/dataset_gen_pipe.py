@@ -58,7 +58,7 @@ Several steps are required: normalization, crop and .pickle generation
 import os
 from os.path import join
 import json
-from crop_hemisphere_skeleton import crop_tal, get_subject_list
+from crop_hemisphere_skeleton import crop_tal
 from load_data import fetch_data
 
 
@@ -66,7 +66,6 @@ from load_data import fetch_data
 # Global variables (that the user can change)
 ######################################################################
 
-#type_input= 'skeleton'
 type_input= 'skeleton'
 
 side = 'L' # hemisphere 'L' or 'R'
@@ -78,10 +77,10 @@ side = 'L' # hemisphere 'L' or 'R'
 # from native to MNI through SPM
 # These files have been created with spm_skeleton
 # example: dir_input_transform = '/neurospin/dico/lguillon/skeleton/transfo_pre_process'
-dir_input_transform = '/home/ad265693/tmp/dico/deep_folding_data/data/transfo_pre_process'
+dir_input_transform = '/home/ad265693/tmp/dico/deep_folding_data/data/transfo_pre_process_ref'
 
 # Input directory contaning the morphologist analysis of the HCP database
-dir_input_MRI = '/home/ad265693/tmp/hcp/ANALYSIS/3T_morphologist/'
+dir_input_MRI ='/home/ad265693/tmp/hcp/ANALYSIS/3T_morphologist/'
 
 # Output directory
 # --------------
@@ -98,10 +97,11 @@ def main():
   The programm loops over all the subjects from the input directory.
   """
   #bbmin_tal, bb_maxtal = crop_tal(side, dir_input_MRI)
-  bbmin_tal, bb_maxtal = [154, 88, 118], [305, 383, 314]
+  bbmin_tal, bb_maxtal = ([154, 88, 118], [305, 383, 314])
   print(bbmin_tal, bb_maxtal)
-  for sub in os.listdir(dir_input_MRI)[:10]: # go through all HCP subjects folder
-
+  subject_list = [ name for name in os.listdir(dir_input_MRI) if os.path.isdir(os.path.join(dir_input_MRI, name)) ]
+  #for sub in os.listdir(dir_input_MRI)[:10]: # go through all HCP subjects folder
+  for sub in subject_list[:30]:
       # Creating transformation file name
       file_transform_basename = 'natif_to_template_spm_' + sub + '.trm'
       file_transform = join(dir_input_transform, file_transform_basename)
