@@ -40,10 +40,11 @@ Tools in order to create pytorch dataloaders
 import pandas as pd
 import torch
 import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torchio as tio
+#from torch.autograd import Variable
+#import torchio as tio
+from .pynet_transforms import *
 
-from preprocessing.pynet_transforms import *
+#from preprocessing.pynet_transforms import *
 
 class TensorDataset():
     """Custom dataset that includes image file paths.
