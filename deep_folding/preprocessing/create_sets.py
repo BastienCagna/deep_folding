@@ -47,9 +47,8 @@ import itertools
 import torch
 import torchvision.transforms as transforms
 from torch.autograd import Variable
-import torchio as tio
 
-from .datasets import SkeletonDataset
+from .datasets import *
 from ..utils import save_results
 
 
@@ -102,14 +101,15 @@ def create_hcp_benchmark(side, benchmark, directory, batch_size, handedness=1):
     #val_set = AugDatasetTransformer(val_set)
     #test_set  = AugDatasetTransformer(test_set)
 
-    dataset_train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
-                                                shuffle=True, num_workers=8)
-    dataset_val_loader = torch.utils.data.DataLoader(val_set, shuffle=True,
-                                                          num_workers=0)
-    dataset_test_loader = torch.utils.data.DataLoader(test_set, shuffle=True,
-                                                              num_workers=0)
+    # dataset_train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
+    #                                             shuffle=True, num_workers=8)
+    # dataset_val_loader = torch.utils.data.DataLoader(val_set, shuffle=True,
+    #                                                       num_workers=0)
+    # dataset_test_loader = torch.utils.data.DataLoader(test_set, shuffle=True,
+    #                                                          num_workers=0)
 
-    return root_dir, dataset_train_loader, dataset_val_loader, dataset_test_loader
+    # return root_dir, dataset_train_loader, dataset_val_loader, dataset_test_loader
+    return root_dir, train_set, val_set, test_set
 
 
 def create_benchmark_test(benchmark, side, handedness=1):
