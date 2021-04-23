@@ -77,14 +77,14 @@ side = 'L' # hemisphere 'L' or 'R'
 # from native to MNI through SPM
 # These files have been created with spm_skeleton
 # example: dir_input_transform = '/neurospin/dico/lguillon/skeleton/transfo_pre_process'
-dir_input_transform = '/home/ad265693/tmp/dico/deep_folding_data/data/transfo_pre_process_ref'
+dir_input_transform = '/neurospin/dico/deep_folding_data/data/transfo_pre_process_ref'
 
 # Input directory contaning the morphologist analysis of the HCP database
-dir_input_MRI ='/home/ad265693/tmp/hcp/ANALYSIS/3T_morphologist/'
+dir_input_MRI ='/neurospin/hcp/ANALYSIS/3T_morphologist/'
 
 # Output directory
 # --------------
-dir_output = join('/home/ad265693/tmp/dico/adneves/output',side + '_' + type_input)
+dir_output = join('/neurospin/dico/adneves/output',side + '_' + type_input)
 
 ######################################################################
 # Main function
@@ -97,11 +97,12 @@ def main():
   The programm loops over all the subjects from the input directory.
   """
   #bbmin_tal, bb_maxtal = crop_tal(side, dir_input_MRI)
-  bbmin_tal, bb_maxtal = ([154, 88, 118], [305, 383, 314])
-  print(bbmin_tal, bb_maxtal)
+  bbmin_tal, bb_maxtal = ([71, 1, 1], [155, 185, 135])
+  xmin, ymin, zmin = str(bbmin_tal[0]), str(bbmin_tal[1]), str(bbmin_tal[2])
+  xmax, ymax, zmax = str(bb_maxtal[0]), str(bb_maxtal[1]), str(bb_maxtal[2])
+
   subject_list = [ name for name in os.listdir(dir_input_MRI) if os.path.isdir(os.path.join(dir_input_MRI, name)) ]
-  #for sub in os.listdir(dir_input_MRI)[:10]: # go through all HCP subjects folder
-  for sub in subject_list[:30]:
+  for sub in subject_list:
       # Creating transformation file name
       file_transform_basename = 'natif_to_template_spm_' + sub + '.trm'
       file_transform = join(dir_input_transform, file_transform_basename)
@@ -130,24 +131,13 @@ def main():
       cmd_normalize = 'AimsResample' + ' -i ' + file_input + ' -o ' + file_output + ' -m ' + file_transform + ' -r ' + file_SPM
       os.system(cmd_normalize)
 
-       # Crop of the images based on bounding box
-      xmin, ymin, zmin = str(bbmin_tal[0]), str(bbmin_tal[1]), str(bbmin_tal[2])
-      xmax, ymax, zmax = str(bb_maxtal[0]), str(bb_maxtal[1]), str(bb_maxtal[2])
-
       cmd_bounding_box = ' -x ' + xmin + ' -y ' + ymin + ' -z ' + zmin + ' -X '+ xmax + ' -Y ' + ymax + ' -Z ' + zmax
-      cmd_crop = 'AimsSubVolume' + ' -i ' + file_output + ' -o ' + file_output + cmd_bounding_box
+
+      cmd_crop = 'AimsSubVolume' + ' -i ' + file_output + cmd_bounding_box + ' -o ' + file_output
       os.system(cmd_crop)
 
   # Creation of global .pickle file
-  fetch_data(dir_output, type_input, save_dir=dir_output, side=side)
-
-  # Log information
-  input_dict = {'side': side}
-  log_file_name = join(dir_output, 'logs.json')
-  log_file = open(log_file_name, 'a+')
-  log_file.write(json.dumps(input_dict))
-  log_file.close()
-
+  fetch_data(dir_output, type_input, save_dir=dir_output, side=side, file_n=0, until=1000)
 
 ######################################################################
 # Main program
@@ -155,3 +145,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    #fetch_data(dir_output, type_input, save_dir=dir_output, side=side, file_n=0, until=1000)

@@ -10,6 +10,7 @@ from datetime import date
 import argparse
 import pandas as pd
 import itertools
+from torchvision.utils import save_image
 import matplotlib.pyplot as plt
 
 from os.path import join
@@ -22,7 +23,7 @@ from pynet_transforms import *
 import save_results
 
 
-class TensorDataset():
+class TensorDataset_skeleton():
     """Custom dataset that includes image file paths.
     Apply different transformations to data depending on the type of input.
     IN: data_tensor: tensor containing MRIs as numpy arrays
@@ -44,9 +45,58 @@ class TensorDataset():
             idx = idx.tolist()
         sample = self.data_tensor[idx]
         file = self.filenames[idx]
-
+        self.transform1 = DownsampleTensor(scale=2)
+        #self.transform2 = Padding([1, 192, 192, 192], fill_value=0)
+        self.transform2 = Padding([1, 96, 96, 96], fill_value=0)
+        sample = self.transform1(sample)
+        _,x,y,z = sample.shape
+        for i in range(x):
+            for j in range(y):
+                for k in range(z):
+                    if sample[0,i,j,k] != 0:
+                        sample[0,i,j,k] = 0
+                    else:
+                        sample[0,i,j,k] =  1
+        sample = self.transform2(sample)
         tuple_with_path = (sample, file)
         return tuple_with_path
+
+class TensorDataset_gw():
+    """Custom dataset that includes image file paths.
+    Apply different transformations to data depending on the type of input.
+    IN: data_tensor: tensor containing MRIs as numpy arrays
+        filenames: list of subjects' IDs
+        skeleton: boolean, whether input is skeleton images or not
+    OUT: tensor of [batch, sample, subject ID]
+    """
+    def __init__(self, data_tensor, filenames):
+        self.data_tensor = data_tensor
+        self.transform = True
+        self.nb_train = len(filenames)
+        self.filenames = filenames
+
+    def __len__(self):
+        return(self.nb_train)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        sample = self.data_tensor[idx]
+        file = self.filenames[idx]
+        self.transform1 = DownsampleTensor(scale=2)
+        #self.transform2 = Padding([1, 192, 192, 192], fill_value=0)
+        self.transform2 = Padding([1, 96, 96, 96], fill_value=0)
+        sample = self.transform1(sample)
+        _,x,y,z = sample.shape
+        for i in range(x):
+            for j in range(y):
+                for k in range(z):
+                    distances = [abs(sample[0,i,j,k]), abs(sample[0,i,j,k]-100), abs(sample[0,i,j,k] - 200) ]
+                    sample[0,i,j,k] = np.argmin(distances)
+        sample = self.transform2(sample)
+        tuple_with_path = (sample, file)
+        return tuple_with_path
+
 
 
 class SkeletonDataset():
@@ -79,10 +129,10 @@ class SkeletonDataset():
 
         fill_value = 1
         sample = NormalizeSkeleton(sample)()
-        self.transform = transforms.Compose([Downsample(scale=2),
+        '''self.transform = transforms.Compose([Downsample(scale=2),
                          Padding([1, 40, 40, 40], fill_value=fill_value)
                          ])
-        sample = self.transform(sample)
+        sample = self.transform(sample)'''
         tuple_with_path = (sample, filename)
         return tuple_with_path
 
@@ -205,14 +255,15 @@ def create_hcp_sets(input_type, side, directory, batch_size):
     date_exp = date.today().strftime("%d%m%y")
     root_dir= join(directory, date_exp)
     #save_results.create_folder(root_dir)
-    tmp = pd.read_pickle(join(directory , side + input_type +'.pkl'))
+    tmp = pd.read_pickle(directory +'.pkl')
     filenames = list(tmp.columns)
     #print(tmp.loc[0,filenames[4]])
-    tmp = torch.from_numpy(np.array([tmp.loc[0,file_name] for file_name in filenames]))
-    print(tmp.shape)
+    tmp = torch.from_numpy(np.array([tmp.loc[0,file_name] for file_name in filenames[:300]]))
     #tmp = tmp.to('cuda')
-
-    hcp_dataset = TensorDataset(filenames=filenames, data_tensor=tmp)
+    if input_type =='gw' :
+        hcp_dataset = TensorDataset_gw(filenames=filenames[:300], data_tensor=tmp)
+    else:
+        hcp_dataset = TensorDataset_skeleton(filenames=filenames[:300], data_tensor=tmp)
     # Split training set into train, val and test
     partition = [0.7, 0.2, 0.1]
     print([round(i*(len(hcp_dataset))) for i in partition])
@@ -349,9 +400,11 @@ def create_aims_sets(skeleton, side, handedness=0):
 
     return asd_dataset, controls_dataset, id_controls_dataset, asd_id_dataset
 
-def main_create(input_type,side, batch_size) :
-    directory ='/neurospin/dico/adneves/output/' + side + '_' + input_type
-    return create_hcp_sets(input_type=input_type, side=side, directory=directory, batch_size=batch_size)
+def main_create(input_type,side, batch_size, nb) :
+    #directory_base ='/home/ad265693/tmp/dico/adneves/output/'
+    directory_base ='/neurospin/dico/adneves/output/'
+    return create_hcp_sets(input_type=input_type, side=side, directory = join(directory_base, side + '_'+
+    input_type, str(nb) + '_' + side + input_type) , batch_size=batch_size)
 
 
 if __name__ == '__main__':
