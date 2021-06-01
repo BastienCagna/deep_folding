@@ -45,19 +45,17 @@ class TensorDataset_skeleton():
             idx = idx.tolist()
         sample = self.data_tensor[idx]
         file = self.filenames[idx]
-        self.transform1 = DownsampleTensor(scale=2)
-        #self.transform2 = Padding([1, 192, 192, 192], fill_value=0)
-        self.transform2 = Padding([1, 96, 96, 96], fill_value=0)
+        #self.transform1 = DownsampleTensor(scale=2)
+        #self.transform1 = Padding([1, 192, 192, 192], fill_value=0)
+        self.transform1 = Padding([1, 80, 80, 80], fill_value=11)
+        #self.transform2 = Padding([1, 96, 96, 96], fill_value=0)
         sample = self.transform1(sample)
+        values=[0,11,60]
         _,x,y,z = sample.shape
-        for i in range(x):
-            for j in range(y):
-                for k in range(z):
-                    if sample[0,i,j,k] != 0:
-                        sample[0,i,j,k] = 0
-                    else:
-                        sample[0,i,j,k] =  1
-        sample = self.transform2(sample)
+        sample[sample == 0] = 0 # inside the brain
+        sample[sample == 11] = 1 # sulci
+        sample[sample > 1] = 2 # out of the brain
+        #sample = self.transform2(sample)
         tuple_with_path = (sample, file)
         return tuple_with_path
 
@@ -258,14 +256,14 @@ def create_hcp_sets(input_type, side, directory, batch_size):
     tmp = pd.read_pickle(directory +'.pkl')
     filenames = list(tmp.columns)
     #print(tmp.loc[0,filenames[4]])
-    tmp = torch.from_numpy(np.array([tmp.loc[0,file_name] for file_name in filenames[:300]]))
+    tmp = torch.from_numpy(np.array([tmp.loc[0,file_name] for file_name in filenames]))
     #tmp = tmp.to('cuda')
     if input_type =='gw' :
-        hcp_dataset = TensorDataset_gw(filenames=filenames[:300], data_tensor=tmp)
+        hcp_dataset = TensorDataset_gw(filenames=filenames, data_tensor=tmp)
     else:
-        hcp_dataset = TensorDataset_skeleton(filenames=filenames[:300], data_tensor=tmp)
+        hcp_dataset = TensorDataset_skeleton(filenames=filenames, data_tensor=tmp)
     # Split training set into train, val and test
-    partition = [0.7, 0.2, 0.1]
+    partition = [0.8, 0.1, 0.1]
     print([round(i*(len(hcp_dataset))) for i in partition])
     train_set, val_set, test_set = torch.utils.data.random_split(hcp_dataset,
                             [round(i*(len(hcp_dataset))) for i in partition])
@@ -276,9 +274,9 @@ def create_hcp_sets(input_type, side, directory, batch_size):
 
     dataset_train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
                                                 shuffle=True, num_workers=0)
-    dataset_val_loader = torch.utils.data.DataLoader(val_set, shuffle=True,
+    dataset_val_loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size, shuffle=True,
                                                           num_workers=0)
-    dataset_test_loader = torch.utils.data.DataLoader(test_set, shuffle=True,
+    dataset_test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size,shuffle=True,
                                                           num_workers=0)
 
     print("Dataset generated \n Size of training dataset :", len(dataset_train_loader))
@@ -400,12 +398,13 @@ def create_aims_sets(skeleton, side, handedness=0):
 
     return asd_dataset, controls_dataset, id_controls_dataset, asd_id_dataset
 
-def main_create(input_type,side, batch_size, nb) :
-    #directory_base ='/home/ad265693/tmp/dico/adneves/output/'
-    directory_base ='/neurospin/dico/adneves/output/'
-    return create_hcp_sets(input_type=input_type, side=side, directory = join(directory_base, side + '_'+
+def main_create(input_type,side, batch_size,nb,directory_base='/neurospin/dico/adneves/pickles/',adn=True) :
+    #directory_base ='/neurospin/dico/adneves/output/'
+    if adn:
+        return create_hcp_sets(input_type=input_type, side=side, directory = join(directory_base, side + '_'+
     input_type, str(nb) + '_' + side + input_type) , batch_size=batch_size)
-
+    else:
+        return create_hcp_sets(input_type=input_type, side=side, directory = directory_base, batch_size=batch_size)
 
 if __name__ == '__main__':
     main()
