@@ -4,12 +4,12 @@
 # You can set these variables from the command line, and also
 # from the environment for the first two.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = $(CASA_HOST_HOME)/.local/bin/sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = ../../../deep_folding_docs
 
 # Variables to generate .rst files through apidoc
-SPHINXAPIDOC  = sphinx-apidoc 
+SPHINXAPIDOC  = $(CASA_HOST_HOME)/.local/bin/sphinx-apidoc 
 MODULEDIR     = ../../deep_folding
 
 # Put it first so that "make" without argument is like "make help".
