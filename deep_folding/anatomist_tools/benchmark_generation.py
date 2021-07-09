@@ -56,16 +56,16 @@ import os
 from deep_folding.anatomist_tools.utils.load_bbox import compute_max_box
 
 
-_DEFAULT_DATA_DIR = '/neurospin/hcp/ANALYSIS/3T_morphologist/'
-_DEFAULT_SAVING_DIR = '/neurospin/dico/lguillon/mic21/anomalies_set/dataset/'
-_DEFAULT_BBOX_DIR = '/neurospin/dico/data/deep_folding/data/bbox/'
+_DEFAULT_DATA_DIR = '/home/ad265693/tmp/hcp/ANALYSIS/3T_morphologist/'
+_DEFAULT_SAVING_DIR = '/home/ad265693/tmp/dico/adneves/benchmark/'
+_DEFAULT_BBOX_DIR = '/home/ad265693/tmp/dico/data/deep_folding/data/bbox/'
 
 
 class Benchmark():
     """Generates benchmark of altered skeletons
     """
 
-    def __init__(self, b_num, side, ss_size, sulci_list,
+    def __init__(self, side, ss_size, sulci_list,
                  data_dir=_DEFAULT_DATA_DIR, saving_dir=_DEFAULT_SAVING_DIR,
                  bbox_dir=_DEFAULT_BBOX_DIR):
         """Inits with list of directories, bounding box and sulci
@@ -79,12 +79,11 @@ class Benchmark():
                       MRI images
             saving_dir: name of directory where altered skeletons will be saved
         """
-        self.b_num = b_num
         self.side = side
         self.ss_size = ss_size
         self.sulci_list = sulci_list
         self.data_dir = data_dir
-        self.saving_dir = os.path.join(saving_dir, 'benchmark'+str(self.b_num))
+        self.saving_dir = os.path.join(saving_dir)
         self.abnormality_test = []
         self.bbmin, self.bbmax = compute_max_box(sulci_list, side,
                                 talairach_box=True, src_dir=bbox_dir)
@@ -227,10 +226,10 @@ def get_sub_list(subjects_list):
         subjects_list = list(subjects_list['0'])
     else:
         # Selection of right handed subjects only
-        right_handed = pd.read_csv('/neurospin/dico/lguillon/hcp_info/right_handed.csv')
+        right_handed = pd.read_csv('/home/ad265693/tmp/dico/lguillon/hcp_info/left_handed.csv')
         subjects_list = list(right_handed['Subject'].astype(str))
         # Check whether subjects' files exist
-        hcp_sub = os.listdir('/neurospin/hcp/ANALYSIS/3T_morphologist/')
+        hcp_sub = os.listdir('/home/ad265693/tmp/hcp/ANALYSIS/3T_morphologist/')
         subjects_list = [sub for sub in subjects_list if sub in hcp_sub]
 
         random.shuffle(subjects_list)
@@ -238,8 +237,8 @@ def get_sub_list(subjects_list):
     return subjects_list
 
 
-def generate(b_num, side, ss_size, sulci_list, mode='suppress', bench_size=150,
-             subjects_list=None):
+def generate( side, ss_size, sulci_list, mode='suppress', bench_size=150,
+             subjects_list=None, bbox_dir=_DEFAULT_BBOX_DIR):
     """
     Generates a benchmark
 
@@ -250,7 +249,7 @@ def generate(b_num, side, ss_size, sulci_list, mode='suppress', bench_size=150,
         mode: string giving the type of benchmark to create ('suppress', 'add'
               or 'mix')
     """
-    benchmark = Benchmark(b_num, side, ss_size, sulci_list)
+    benchmark = Benchmark( side, ss_size, sulci_list,bbox_dir=bbox_dir)
     abnormality_test = []
     givers = []
     subjects_list = get_sub_list(subjects_list)
@@ -286,5 +285,4 @@ def generate(b_num, side, ss_size, sulci_list, mode='suppress', bench_size=150,
 ######################################################################
 
 if __name__ == '__main__':
-    generate(333, 'R', 1000, sulci_list=['S.T.s.ter.asc.post._right', 'S.T.s.ter.asc.ant._right'],
-         mode='suppress', bench_size=4)
+    generate('L', 1000, sulci_list=['S.T.s.ter.asc.post._left', 'S.T.s.ter.asc.ant._left'],mode='suppress', bench_size=4)
