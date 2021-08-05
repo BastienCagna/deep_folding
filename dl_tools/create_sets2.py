@@ -125,12 +125,16 @@ class SkeletonDataset():
             filename = self.df.iloc[idx]['ID']
             sample = self.df.iloc[idx][0]
 
-        fill_value = 1
-        sample = NormalizeSkeleton(sample)()
-        '''self.transform = transforms.Compose([Downsample(scale=2),
-                         Padding([1, 40, 40, 40], fill_value=fill_value)
-                         ])
-        sample = self.transform(sample)'''
+        #print(sample.shape)
+        self.transform1 = Padding([1, 40, 40, 40], fill_value=11)
+        #self.transform2 = Padding([1, 96, 96, 96], fill_value=0)
+        sample = self.transform1(sample)
+        values=[0,11,60]
+        _,x,y,z = sample.shape
+        sample[sample == 0] = 0 # inside the brain
+        sample[sample == 11] = 1 # sulci
+        sample[sample > 1] = 2 # out of the brain
+        #sample = self.transform2(sample)
         tuple_with_path = (sample, filename)
         return tuple_with_path
 
@@ -254,19 +258,24 @@ def create_hcp_sets(input_type, side, directory, batch_size):
     root_dir= join(directory, date_exp)
     #save_results.create_folder(root_dir)
     tmp = pd.read_pickle(directory +'.pkl')
+    tmp=tmp.reset_index(drop=True)
+
+
     filenames = list(tmp.columns)
-    #print(tmp.loc[0,filenames[4]])
-    tmp = torch.from_numpy(np.array([tmp.loc[0,file_name] for file_name in filenames]))
+
+
     #tmp = tmp.to('cuda')
     if input_type =='gw' :
         hcp_dataset = TensorDataset_gw(filenames=filenames, data_tensor=tmp)
     else:
-        hcp_dataset = TensorDataset_skeleton(filenames=filenames, data_tensor=tmp)
+        hcp_dataset = SkeletonDataset(dataframe=tmp,filenames=filenames)
     # Split training set into train, val and test
-    partition = [0.7, 0.2, 0.1]
+    partition = [0.8, 0.2, 0.1]
     print([round(i*(len(hcp_dataset))) for i in partition])
-    #train_set, val_set, test_set = torch.utils.data.random_split(hcp_dataset,
-    #                        [round(i*(len(hcp_dataset))) for i in partition])
+    '''
+    train_set, val_set, test_set = torch.utils.data.random_split(hcp_dataset,
+                          [round(i*(len(hcp_dataset))) for i in partition])
+                          '''
     train_set, val_set, test_set = torch.utils.data.random_split(hcp_dataset,
                             [882,126,94])
     #train_set = AugDatasetTransformer(train_set)

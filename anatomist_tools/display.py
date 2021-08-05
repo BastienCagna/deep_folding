@@ -37,24 +37,39 @@ def main():
     root_dir = args.root_dir
 
     a = anatomist.Anatomist()
-    block = a.AWindowsBlock(a, 6)  # Parameter 6 corresponds to the number of columns displayed. Can be changed.
+    block = a.AWindowsBlock(a, 12)  # Parameter 6 corresponds to the number of columns displayed. Can be changed.
 
-    input_arr = np.load(root_dir+'input.npy') # Input
-    output_arr = np.load(root_dir+'output.npy') # Model's output
-    phase_arr = np.load(root_dir+'phase.npy') # Train or validation
-    id_arr = np.load(root_dir+'id.npy') # Subject id
-    for k in range(len(id_arr[0])):
+    """input_arr = np.load(root_dir+'inputval.npy') # Input
+    output_arr = np.load(root_dir+'outputval.npy') # Model's output
+    phase_arr = np.load(root_dir+'phaseval.npy') # Train or validation
+    id_arr = np.load(root_dir+'idval.npy') # Subject id
+    #for k in range(len(id_arr[0])(50, 100)):
+    for k in range(50, 100):
         sub_id = id_arr[0][k]
         phase = phase_arr[0][k]
         input = input_arr[0][k]
         output = output_arr[0][k].astype(float)
+        print(input.shape)
+        print(input_arr.shape)
         for img, entry in [(input, 'input'), (output, 'output')]:
             globals()['block%s%s%s' % (sub_id, phase, entry)] = a.createWindow('Sagittal', block=block)
 
             globals()['img%s%s%s' % (sub_id, phase, entry)], globals()['a_img%s%s%s' % (sub_id,
                             phase, entry)] = array_to_ana(a, img, sub_id, phase, status=entry)
 
-            globals()['block%s%s%s' % (sub_id, phase, entry)].addObjects(globals()['a_img%s%s%s' % (sub_id, phase, entry)])
+            globals()['block%s%s%s' % (sub_id, phase, entry)].addObjects(globals()['a_img%s%s%s' % (sub_id, phase, entry)])"""
+
+    output_arr = np.load(root_dir) # Input
+
+    output = output_arr[0].astype(float)
+    print(output.shape)
+    print(output_arr.shape)
+    for img, entry in [(output, 'output')]:
+        globals()['a' ] = a.createWindow('Sagittal', block=block)
+
+        globals()['img' ], globals()['a_img' ] = array_to_ana(a, img, '1', '1', status=entry)
+
+        globals()['a' ].addObjects(globals()['a_img'])
 
 
 

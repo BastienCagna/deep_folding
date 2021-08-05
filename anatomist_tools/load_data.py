@@ -13,7 +13,7 @@ import numpy as np
 import re
 
 
-def fetch_data(root_dir, type_input, save_dir=None, side=None, file_n=0, until=-1):
+def fetch_data(root_dir, type_input,ss_size, save_dir=None, side=None, file_n=0):
     """
     Creates a dataframe of data with a column for each subject and associated
     np.array. Generation a dataframe of "normal" images and a dataframe of
@@ -27,59 +27,29 @@ def fetch_data(root_dir, type_input, save_dir=None, side=None, file_n=0, until=-
         n = 0
         file_n =0
         data_dict = dict()
-        print(len(os.listdir(root_dir)))
-        for filename in os.listdir(root_dir)[:until]:
-            file_n += 1
-            file = os.path.join(root_dir, filename)
-            if os.path.isfile(file) and '.nii' in file and '.minf' not in file and 'normalized' in file:
+        for file in os.listdir(os.path.join(root_dir, str(ss_size)+'/')):
+            file_n +=1
+            if  'normalized' in file and '.minf' not in file:
+                file=join(root_dir, str(ss_size)+'/',file)
                 aimsvol = aims.read(file)
                 sample = np.asarray(aimsvol).T
-                filename = re.search('(\d{6})', filename).group(0)
+                filename = file[46:52]
+                print(filename)
                 print('filename = ' + filename)
                 print('file = ' + file)
-
                 data_dict[filename] = [sample]
-                file_data= open("save_data.txt", 'w')
-                file_data.write(str(data_dict))
-                file_data.close()
-                n += 1
-                print('file',n, 'total : ',file_n)
-                    #print(filename)
 
+                n += 1
+            print('file',n, 'total : ',file_n)
+                    #print(filename)
+        print('taille dict',len(data_dict))
         dataframe = pd.DataFrame.from_dict(data_dict)
 
 
         if save_dir:
-            file_pickle_basename = str(file_n) + '_' + side + type_input + '.pkl'
+            file_pickle_basename =  side + type_input+'_'+str(ss_size) +'.pkl'
             file_pickle = os.path.join(save_dir, file_pickle_basename)
             dataframe.to_pickle(file_pickle)
 
-    else:
-        df=pd.read_pickle(join('/neurospin/dico/adneves/output/L_gw', str(506) + '_' + side + type_input + '.pkl'))
-        n= len(list(df.columns))
-        data_dict= df.to_dict()
-        for filename in os.listdir(root_dir)[file_n:until]:
-            file_n+=1
-            file = os.path.join(root_dir, filename)
-            if os.path.isfile(file) and '.nii' in file and '.minf' not in file and 'normalized' in file:
-                aimsvol = aims.read(file)
-                sample = np.asarray(aimsvol).T
-                filename = re.search('(\d{6})', filename).group(0)
-                print('filename = ' + filename)
-                print('file = ' + file)
 
-                data_dict[filename] = [sample]
-                file_data= open("save_data.txt", 'w')
-                file_data.write(str(data_dict))
-                file_data.close()
-                n += 1
-                print('file',n, 'total : ',file_n)
-                    #print(filename)
-
-        dataframe = pd.DataFrame.from_dict(data_dict)
-
-
-        if save_dir:
-            file_pickle_basename = str(until) + '_' + side + type_input + '.pkl'
-            file_pickle = os.path.join(save_dir, file_pickle_basename)
-            dataframe.to_pickle(file_pickle)
+fetch_data(root_dir='/home/ad265693/tmp/dico/adneves/benchmark/', type_input='skeleton',ss_size='raw', save_dir='/home/ad265693/tmp/dico/adneves/benchmark/', side='L', file_n=0)

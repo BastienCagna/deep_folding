@@ -22,12 +22,12 @@ def generate(b_num, side, region, ss_size):
          list of subjects altered or original
     """
     # List of right handed subjects
-    right_handed = pd.read_csv('/neurospin/dico/lguillon/hcp_info/right_handed.csv')
+    right_handed = pd.read_csv('/home/ad265693/tmp/dico/lguillon/hcp_info/right_handed.csv')
     subjects_list = list(right_handed['Subject'])
 
-    data_dir = '/neurospin/hcp/ANALYSIS/3T_morphologist/' # folder containing all
+    data_dir = '/home/ad265693/tmp/hcp/ANALYSIS/3T_morphologist/' # folder containing all
                                                           # HCP subjects folder
-    saving_dir = '/neurospin/dico/lguillon/mic21/anomalies_set/dataset/benchmark' + str(b_num) + '/0_' + side + 'side/'
+    saving_dir = '/home/ad265693/tmp/dico/adneves/analyse/bb_size_var/'
     #folder_list = glob(data_dir + '*') # get list of all subjects folder
     random.shuffle(subjects_list)
 
@@ -39,9 +39,10 @@ def generate(b_num, side, region, ss_size):
         bbmin = [34.05417004,  39.15836927, -65.53190718] # Obtained with bbox_definition.py script
         bbmax = [71.73703268, 85.71765662, -2.74244928] # Obtained with bbox_definition.py script
 
-    for sub in subjects_list:
-        print(sub)
+    for sub in range(1):
+        sub=623844
         if os.path.isdir(data_dir + str(sub)):
+            print('oui')
             surfaces = dict()
 
             graph = aims.read(data_dir + str(sub) + '/t1mri/default_acquisition/default_analysis/folds/3.1/default_session_auto/'+ side + str(sub) + '_default_session_auto.arg')

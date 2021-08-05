@@ -12,18 +12,18 @@ import benchmark_generation
 b_num = 2
 side = 'L'
 region = 'S.T.s'
-ss_size = 1000
+ss_size = 200
 
-directory = '/neurospin/dico/lguillon/mic21/anomalies_set/dataset/benchmark'+ str(b_num) + '/'
+'''directory = '/neurospin/dico/lguillon/mic21/anomalies_set/dataset/benchmark'+ str(b_num) + '/'
 if not os.path.isdir(directory):
     os.mkdir(directory)
     os.mkdir(directory + '0_'+ side+ 'side/')
 
-new_dir = directory + '0_'+ side+ 'side/'
+new_dir = directory + '0_'+ side+ 'side/'''
 
 benchmark_generation.generate(b_num, side, region, ss_size)
 
-for img in os.listdir(new_dir):
+'''for img in os.listdir(new_dir):
     if '.nii.gz' in img and 'minf' not in img:
         sub = re.search('_(\d{6})', img).group(1)
 
@@ -41,4 +41,4 @@ for img in os.listdir(new_dir):
 input_dict = {'region': region, 'simple_surface_min_size': ss_size}
 log_file = open(new_dir + "logs.json", "a+")
 log_file.write(json.dumps(input_dict))
-log_file.close()
+log_file.close()'''
